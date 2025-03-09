@@ -62,7 +62,6 @@ class CarController(CarControllerBase, EsccCarController, MadsCarController):
     self.lkas_max_torque = 0
     self.last_button_frame = 0
     self.angle_limit_counter = 0
-    self.target_torque = self.params.ANGLE_MIN_TORQUE
 
   def update(self, CC, CC_SP, CS, now_nanos):
     EsccCarController.update(self, CS)
@@ -98,15 +97,7 @@ class CarController(CarControllerBase, EsccCarController, MadsCarController):
         self.lkas_max_torque = max(self.lkas_max_torque - self.params.ANGLE_TORQUE_DOWN_RATE, self.params.ANGLE_MIN_TORQUE)
       else:
         # ramp back up on engage as well
-        raw_target = np.interp(CS.out.vEgoRaw, self.params.ANGLE_TORQUE_LIMIT_SPEED, self.params.ANGLE_TORQUE_LIMIT)
-        raw_target = np.clip(raw_target, self.params.ANGLE_MIN_TORQUE, self.params.ANGLE_MAX_TORQUE)
-
-        # Apply smoothing - adjust SMOOTH_FACTOR to control response (0.1-0.3 for more smoothing, 0.5-0.9 for less)
-        SMOOTH_FACTOR = 0.2
-        self.target_torque = self.target_torque * (1 - SMOOTH_FACTOR) + raw_target * SMOOTH_FACTOR
-        
-        # Use the smoothed target
-        self.lkas_max_torque = min(self.lkas_max_torque + self.params.ANGLE_TORQUE_UP_RATE, float(self.target_torque))
+        self.lkas_max_torque = min(self.lkas_max_torque + self.params.ANGLE_TORQUE_UP_RATE, self.params.ANGLE_MAX_TORQUE)
 
     if not CC.latActive:
       apply_torque = 0
