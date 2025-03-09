@@ -24,10 +24,14 @@ class CarControllerParams:
 
   # Stock LFA system is seen sending 250 max, but for LKAS events it's 175 max.
   # 250 can at least achieve 4 m/s^2, 80 corresponds to ~2.5 m/s^2
-  ANGLE_MAX_TORQUE = 150  # The maximum amount of torque that will be allowed
+  ANGLE_MAX_TORQUE = 250  # The maximum amount of torque that will be allowed
   ANGLE_MIN_TORQUE = 25  # equivalent to ~0.8 m/s^2 of torque (based on ANGLE_MAX_TORQUE) when overriding
   ANGLE_TORQUE_UP_RATE = 2  # Indicates how fast the torque ramps up after user intervention.
   ANGLE_TORQUE_DOWN_RATE = 4  # Indicates how fast the torque ramps down during user intervention (handing off).
+
+  ANGLE_TORQUE_LIMIT_SPEED = [0, 2, 6, 8, 16.7, 25, 30]
+
+  ANGLE_TORQUE_LIMIT = [0, ANGLE_MAX_TORQUE * 0.4, ANGLE_MAX_TORQUE * 0.6, ANGLE_MAX_TORQUE * 0.7, ANGLE_MAX_TORQUE, ANGLE_MAX_TORQUE * 0.7, ANGLE_MAX_TORQUE * 0.5]
 
   def __init__(self, CP):
     self.STEER_DELTA_UP = 3
@@ -144,6 +148,7 @@ class HyundaiFlags(IntFlag):
   ALT_LIMITS_2 = 2 ** 26
 
   CANFD_ANGLE_STEERING = 2 ** 27
+
 
 class Footnote(Enum):
   CANFD = CarFootnote(
@@ -296,7 +301,8 @@ class CAR(Platforms):
   )
   HYUNDAI_NEXO_1ST_GEN = HyundaiPlatformConfig(
     [HyundaiCarDocs("Hyundai Nexo 2021", "All", car_parts=CarParts.common([CarHarness.hyundai_h]))],
-    CarSpecs(mass=3990 * CV.LB_TO_KG, wheelbase=2.79, steerRatio=14.19),  # https://www.hyundainews.com/assets/documents/original/42768-2021NEXOProductGuideSpecs.pdf
+    CarSpecs(mass=3990 * CV.LB_TO_KG, wheelbase=2.79, steerRatio=14.19),
+    # https://www.hyundainews.com/assets/documents/original/42768-2021NEXOProductGuideSpecs.pdf
     flags=HyundaiFlags.FCEV,
   )
   HYUNDAI_SANTA_FE = HyundaiPlatformConfig(
@@ -323,7 +329,7 @@ class CAR(Platforms):
   )
   HYUNDAI_SONATA = HyundaiPlatformConfig(
     [HyundaiCarDocs("Hyundai Sonata 2020-23", "All", video_link="https://www.youtube.com/watch?v=ix63r9kE3Fw",
-                   car_parts=CarParts.common([CarHarness.hyundai_a]))],
+                    car_parts=CarParts.common([CarHarness.hyundai_a]))],
     CarSpecs(mass=1513, wheelbase=2.84, steerRatio=13.27 * 1.15, tireStiffnessFactor=0.65),  # 15% higher at the center seems reasonable
     flags=HyundaiFlags.MANDO_RADAR | HyundaiFlags.CHECKSUM_CRC8,
   )
@@ -335,7 +341,8 @@ class CAR(Platforms):
   )
   HYUNDAI_STARIA_4TH_GEN = HyundaiCanFDPlatformConfig(
     [HyundaiCarDocs("Hyundai Staria 2023", "All", car_parts=CarParts.common([CarHarness.hyundai_k]))],
-    CarSpecs(mass=2205, wheelbase=3.273, steerRatio=11.94),  # https://www.hyundai.com/content/dam/hyundai/au/en/models/staria-load/premium-pip-update-2023/spec-sheet/STARIA_Load_Spec-Table_March_2023_v3.1.pdf
+    CarSpecs(mass=2205, wheelbase=3.273, steerRatio=11.94),
+    # https://www.hyundai.com/content/dam/hyundai/au/en/models/staria-load/premium-pip-update-2023/spec-sheet/STARIA_Load_Spec-Table_March_2023_v3.1.pdf
   )
   HYUNDAI_TUCSON = HyundaiPlatformConfig(
     [
@@ -697,13 +704,13 @@ def match_fw_to_car_fuzzy(live_fw_versions, vin, offline_fw_versions) -> set[str
 
 
 HYUNDAI_VERSION_REQUEST_LONG = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER]) + \
-  p16(0xf100)  # Long description
+                               p16(0xf100)  # Long description
 
 HYUNDAI_VERSION_REQUEST_ALT = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER]) + \
-  p16(0xf110)  # Alt long description
+                              p16(0xf110)  # Alt long description
 
 HYUNDAI_ECU_MANUFACTURING_DATE = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER]) + \
-  p16(uds.DATA_IDENTIFIER_TYPE.ECU_MANUFACTURING_DATE)
+                                 p16(uds.DATA_IDENTIFIER_TYPE.ECU_MANUFACTURING_DATE)
 
 HYUNDAI_VERSION_RESPONSE = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER + 0x40])
 
@@ -786,9 +793,9 @@ FW_QUERY_CONFIG = FwQueryConfig(
               CAR.KIA_CEED, CAR.KIA_SELTOS],
   },
   extra_ecus=[
-    (Ecu.adas, 0x730, None),              # ADAS Driving ECU on platforms with LKA steering
-    (Ecu.parkingAdas, 0x7b1, None),       # ADAS Parking ECU (may exist on all platforms)
-    (Ecu.hvac, 0x7b3, None),              # HVAC Control Assembly
+    (Ecu.adas, 0x730, None),  # ADAS Driving ECU on platforms with LKA steering
+    (Ecu.parkingAdas, 0x7b1, None),  # ADAS Parking ECU (may exist on all platforms)
+    (Ecu.hvac, 0x7b3, None),  # HVAC Control Assembly
     (Ecu.cornerRadar, 0x7b7, None),
     (Ecu.combinationMeter, 0x7c6, None),  # CAN FD Instrument cluster
   ],
