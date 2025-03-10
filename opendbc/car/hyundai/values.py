@@ -18,13 +18,13 @@ class CarControllerParams:
   ANGLE_LIMITS: AngleSteeringLimits = AngleSteeringLimits(
     # LKAS angle command is unlimited, but LFA is limited to 176.7 deg (but does not fault if requesting above)
     180,  # deg
-    ([0, 9, 16, 25], [1.4, 0.6, 0.4, 0.1]),
-    ([0, 9, 16, 25], [1.4, 0.7, 0.5, 0.1]),
+    ([0, 9, 16, 25], [1, 0.6, 0.4, 0.1]),
+    ([0, 9, 16, 25], [1, 0.7, 0.5, 0.1]),
   )
 
   # Stock LFA system is seen sending 250 max, but for LKAS events it's 175 max.
   # 250 can at least achieve 4 m/s^2, 80 corresponds to ~2.5 m/s^2
-  ANGLE_MAX_TORQUE = 200  # The maximum amount of torque that will be allowed
+  ANGLE_MAX_TORQUE = 250  # The maximum amount of torque that will be allowed
   ANGLE_MIN_TORQUE = 25  # equivalent to ~0.8 m/s^2 of torque (based on ANGLE_MAX_TORQUE) when overriding
   ANGLE_TORQUE_UP_RATE = 1  # Indicates how fast the torque ramps up after user intervention.
   ANGLE_TORQUE_DOWN_RATE = 3  # Indicates how fast the torque ramps down during user intervention (handing off).
