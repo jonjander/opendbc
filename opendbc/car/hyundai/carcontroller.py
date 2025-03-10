@@ -94,12 +94,12 @@ class CarController(CarControllerBase, EsccCarController, MadsCarController):
       # Similar to torque control driver torque override, we ramp up and down the max allowed torque,
       # but this is a single threshold for simplicity. It also matches the stock system behavior.
       USER_OVERRIDING = abs(CS.out.steeringTorque) > self.params.STEER_THRESHOLD
-      REDUCED_TORQUE_SPEED = 3  # Speed threshold for reduced torque effect
+      REDUCED_TORQUE_SPEED = 5.5  # Speed threshold for reduced torque effect
       LOW_SPEED = CS.out.vEgoRaw <= REDUCED_TORQUE_SPEED
 
       # Smoothly scale torque cap based on speed
       speed_range = [0, REDUCED_TORQUE_SPEED]
-      torque_range = [self.params.ANGLE_MAX_TORQUE * 0.3, self.params.ANGLE_MAX_TORQUE]
+      torque_range = [self.params.ANGLE_MIN_TORQUE * 1.5, self.params.ANGLE_MAX_TORQUE]
       LOW_SPEED_TORQUE_CAP = float(np.interp(CS.out.vEgoRaw, speed_range, torque_range))
 
       if USER_OVERRIDING:
