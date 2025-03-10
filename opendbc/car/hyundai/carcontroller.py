@@ -94,27 +94,26 @@ class CarController(CarControllerBase, EsccCarController, MadsCarController):
       # Similar to torque control driver torque override, we ramp up and down the max allowed torque,
       # but this is a single threshold for simplicity. It also matches the stock system behavior.
       USER_OVERRIDING = abs(CS.out.steeringTorque) > self.params.STEER_THRESHOLD
-      REDUCED_TORQUE_SPEED = 5.5  # Speed threshold for reduced torque effect
-      LOW_SPEED = CS.out.vEgoRaw <= REDUCED_TORQUE_SPEED
-
-      # Smoothly scale torque cap based on speed
-      speed_range = [0, REDUCED_TORQUE_SPEED]
-      torque_range = [self.params.ANGLE_MIN_TORQUE * 1.5, self.params.ANGLE_MAX_TORQUE]
-      LOW_SPEED_TORQUE_CAP = float(np.interp(CS.out.vEgoRaw, speed_range, torque_range))
+      NEAR_CENTER_ANGLE = 3.0  # Threshold in degrees to consider "near center"
 
       if USER_OVERRIDING:
         # When the user is overriding, ramp down to the absolute minimum torque.
         self.lkas_max_torque = max(self.lkas_max_torque - self.params.ANGLE_TORQUE_DOWN_RATE, self.params.ANGLE_MIN_TORQUE)
-      elif LOW_SPEED:
-        # At low speeds (and not overriding), smoothly limit torque based on speed.
-        if self.lkas_max_torque > LOW_SPEED_TORQUE_CAP:
-          self.lkas_max_torque = max(self.lkas_max_torque - self.params.ANGLE_TORQUE_DOWN_RATE, LOW_SPEED_TORQUE_CAP)
-        else:
-          self.lkas_max_torque = min(self.lkas_max_torque + self.params.ANGLE_TORQUE_UP_RATE, LOW_SPEED_TORQUE_CAP)
       else:
-        # Normal conditions: ramp up toward the maximum allowed torque.
-        self.lkas_max_torque = min(self.lkas_max_torque + self.params.ANGLE_TORQUE_UP_RATE, self.params.ANGLE_MAX_TORQUE)
+        # Calculate target torque based on current speed
+        speed_range = [0, 5.5]  # Speed threshold for reduced torque effect
+        torque_range = [self.params.ANGLE_MIN_TORQUE * 1.5, self.params.ANGLE_MAX_TORQUE]
+        target_torque = float(np.interp(CS.out.vEgoRaw, speed_range, torque_range))
 
+        # Reduce torque when near center (when apply_angle_last is close to 0)
+        if abs(self.apply_angle_last) < NEAR_CENTER_ANGLE:
+          target_torque = min(target_torque, self.params.ANGLE_MAX_TORQUE / 2)
+
+        # Ramp up or down toward the target torque
+        if self.lkas_max_torque > target_torque:
+          self.lkas_max_torque = max(self.lkas_max_torque - self.params.ANGLE_TORQUE_DOWN_RATE, target_torque)
+        else:
+          self.lkas_max_torque = min(self.lkas_max_torque + self.params.ANGLE_TORQUE_UP_RATE, target_torque)
 
     if not CC.latActive:
       apply_torque = 0
