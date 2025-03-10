@@ -110,7 +110,8 @@ class CarController(CarControllerBase, EsccCarController, MadsCarController):
 
         # Reduce torque when near center (when apply_angle_last is close to 0)
         if abs(self.apply_angle_last) < NEAR_CENTER_ANGLE:
-          target_torque = min(target_torque, self.params.ANGLE_MAX_TORQUE / 2)
+          adaptive_max_torque = float(np.interp(abs(self.apply_angle_last), [0, NEAR_CENTER_ANGLE], [.5, 1]))
+          target_torque = min(target_torque, self.params.ANGLE_MAX_TORQUE * adaptive_max_torque)
 
         # Ramp up or down toward the target torque
         if self.lkas_max_torque > target_torque:
