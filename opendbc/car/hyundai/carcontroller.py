@@ -94,25 +94,27 @@ class CarController(CarControllerBase, EsccCarController, MadsCarController):
       # Similar to torque control driver torque override, we ramp up and down the max allowed torque,
       # but this is a single threshold for simplicity. It also matches the stock system behavior.
       USER_OVERRIDING = abs(CS.out.steeringTorque) > self.params.STEER_THRESHOLD
-      REDUCED_TORQUE_SPEED = 3
+      REDUCED_TORQUE_SPEED = 3  # Speed threshold for reduced torque effect
       LOW_SPEED = CS.out.vEgoRaw <= REDUCED_TORQUE_SPEED
-      # Define a higher minimum torque for low speeds (e.g., 2x the absolute minimum)
-      LOW_SPEED_TORQUE_CAP = self.params.ANGLE_MIN_TORQUE * 2  # Adjust multiplier as needed
+
+      # Smoothly scale torque cap based on speed
+      speed_range = [0, REDUCED_TORQUE_SPEED]
+      torque_range = [self.params.ANGLE_MAX_TORQUE * 0.3, self.params.ANGLE_MAX_TORQUE]
+      LOW_SPEED_TORQUE_CAP = float(np.interp(CS.out.vEgoRaw, speed_range, torque_range))
 
       if USER_OVERRIDING:
         # When the user is overriding, ramp down to the absolute minimum torque.
         self.lkas_max_torque = max(self.lkas_max_torque - self.params.ANGLE_TORQUE_DOWN_RATE, self.params.ANGLE_MIN_TORQUE)
       elif LOW_SPEED:
-        # At low speeds (and not overriding), maintain a higher minimum torque.
+        # At low speeds (and not overriding), smoothly limit torque based on speed.
         if self.lkas_max_torque > LOW_SPEED_TORQUE_CAP:
-          # If above the low-speed cap, ramp down to approach it.
           self.lkas_max_torque = max(self.lkas_max_torque - self.params.ANGLE_TORQUE_DOWN_RATE, LOW_SPEED_TORQUE_CAP)
         else:
-          # If already below the cap, gradually ramp up but never exceed the cap.
           self.lkas_max_torque = min(self.lkas_max_torque + self.params.ANGLE_TORQUE_UP_RATE, LOW_SPEED_TORQUE_CAP)
       else:
         # Normal conditions: ramp up toward the maximum allowed torque.
         self.lkas_max_torque = min(self.lkas_max_torque + self.params.ANGLE_TORQUE_UP_RATE, self.params.ANGLE_MAX_TORQUE)
+
 
     if not CC.latActive:
       apply_torque = 0
