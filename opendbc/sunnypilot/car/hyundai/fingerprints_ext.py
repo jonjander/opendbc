@@ -13,9 +13,11 @@ FW_VERSIONS_EXT = {
   CAR.KIA_CEED_PHEV_2022_NON_SCC: {
     (Ecu.eps, 0x7D4, None): [
       b'\xf1\x00CD  MDPS C 1.00 1.01 56310-XX000 4CPHC101',
+      b'\xf1\x00CDe MDPS C 1.00 1.01 56310-XX000 4CDHC101',
     ],
     (Ecu.fwdCamera, 0x7C4, None): [
       b'\xf1\x00CDH LKAS AT EUR LHD 1.00 1.01 99211-CR700 931',
+      b'\xf1\x00CD2 LKAS AT EUR LHD 1.00 1.01 99211-CR010 621',
     ],
   },
   # TODO-SP: HYUNDAI_KONA_EV_NON_SCC has the same FW versions as HYUNDAI_KONA_EV, in the future we may
