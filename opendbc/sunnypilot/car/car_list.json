@@ -1707,6 +1707,16 @@
     ],
     "package": "Smart Cruise Control (SCC)"
   },
+  "Kia XCEED PHEV 2021": {
+    "platform": "KIA_XCEED_PHEV_2021",
+    "make": "Kia",
+    "brand": "hyundai",
+    "model": "Ceed",
+    "year": [
+      "2021"
+    ],
+    "package": "Smart Cruise Control (SCC)"
+  },
   "Kia Ceed Plug-in Hybrid Non-SCC 2022": {
     "platform": "KIA_CEED_PHEV_2022_NON_SCC",
     "make": "Kia",
